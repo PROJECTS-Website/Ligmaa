@@ -43,9 +43,10 @@ const SearchPage = () => {
 
       <form
         onSubmit={(e) => e.preventDefault()}
-        className="mb-8 flex justify-center relative"
+        className="mb-8 flex justify-center"
       >
-        <MagnifyingGlassIcon className="size-5 stroke-2 text-gray-200 absolute left-3 top-1/2 transform -translate-y-1/2" />
+       <div className="relative w-full max-w-xl">
+       <MagnifyingGlassIcon className="size-5 stroke-2 text-gray-200 absolute left-3 top-1/2 transform -translate-y-1/2" />
         <input
           type="text"
           value={inputValue}
@@ -53,6 +54,7 @@ const SearchPage = () => {
           placeholder="Search for a movie or TV series..."
           className="w-full max-w-xl p-3 rounded-lg bg-[#222] text-white focus:outline-none pl-10"
         />
+       </div>
       </form>
 
       {loading && (
@@ -60,7 +62,6 @@ const SearchPage = () => {
           <p className="text-lg animate-pulse m-4 flex items-center gap-2">
             <Spinner />
             Loading results...</p>
-          {/* You can add a spinner component here */}
         </div>
       )}
 

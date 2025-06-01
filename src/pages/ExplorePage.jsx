@@ -8,6 +8,7 @@ import {
 } from "../services/tmdbApi";
 import { useParams } from "react-router-dom";
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import Spinner from "../components/Spinner";
 
 const ExplorePage = () => {
   const { query } = useParams();
@@ -66,23 +67,25 @@ const ExplorePage = () => {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {data?.results?.map((result) => (
-              <MovieCard key={result.id} item={result} mediaType={query} />
-            ))}
-            {loading && (
-              <div className="text-center">
-                <p className="text-lg animate-pulse m-4">Loading results...</p>
-                {/* You can add a spinner component here */}
-              </div>
+          {loading && (
+             <div className="text-center min-h-[550px] flex items-center justify-center w-full">
+             <p className="text-lg animate-pulse m-4 flex items-center gap-2">
+               <Spinner />
+               Loading results...</p>
+           </div>
             )}
             {error && (
-              <div className="text-center">
+              <div className="text-center min-h-[250px] flex items-center justify-center w-full">
                 <p className="text-lg text-red-500">
                   Error loading results: {error}
                 </p>
               </div>
             )}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {data?.results?.map((result) => (
+              <MovieCard key={result.id} item={result} mediaType={query} />
+            ))}
+            
           </div>
         </div>
       )}

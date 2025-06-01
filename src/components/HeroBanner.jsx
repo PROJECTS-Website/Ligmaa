@@ -1,15 +1,22 @@
 // src/components/HeroBanner/HeroBanner.jsx
-import React, { useEffect, useState } from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/effect-fade';
+import React, { useEffect, useState } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination, EffectFade, Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/effect-fade";
+import "swiper/css/navigation";
 
-import { useAppContext } from '../context/AppContext';
-import { fetchTrending } from '../services/tmdbApi';
-import { PlayIcon, PlusIcon, StarIcon } from '../components/icons'; // Create these simple SVG icons
-import { Link } from 'react-router-dom'; // For navigation
+import { useAppContext } from "../context/AppContext";
+import { fetchTrending } from "../services/tmdbApi";
+import { PlayIcon, PlusIcon, StarIcon } from "../components/icons"; // Create these simple SVG icons
+import { Link } from "react-router-dom"; // For navigation
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 
 function HeroBanner() {
   const [heroSlides, setHeroSlides] = useState([]);
@@ -19,21 +26,21 @@ function HeroBanner() {
   useEffect(() => {
     if (loadingConfig) return; // Wait for API config
 
-    fetchTrending('movie', 'week') // Fetch weekly trending movies for hero
+    fetchTrending("movie", "week") // Fetch weekly trending movies for hero
       .then((res) => {
         // Take top 5 for hero banner
         setHeroSlides(res.data.results.slice(0, 5));
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Failed to fetch hero slides:', err);
+        console.error("Failed to fetch hero slides:", err);
         setLoading(false);
       });
   }, [loadingConfig]);
 
   if (loading || loadingConfig) {
     return (
-      <div className="h-[60vh] md:h-[70vh] bg-zinc-800 animate-pulse flex items-center justify-center">
+      <div className="h-[50vh] md:h-[70vh] bg-zinc-800 animate-pulse flex items-center justify-center">
         <p></p>
       </div>
     );
@@ -41,16 +48,16 @@ function HeroBanner() {
 
   if (!heroSlides.length) {
     return (
-      <div className="h-[60vh] md:h-[70vh] flex items-center justify-center">
-        <p>No hero content available.</p>
+      <div className="h-[50vh] md:h-[70vh] flex items-center justify-center">
+        <p className="text-white text-xl font-semibold">No hero content available.</p>
       </div>
     );
   }
 
   return (
-    <div className="relative h-[60vh] md:h-[70vh] w-full">
+    <div className="relative h-[50vh] md:h-[70vh] w-full">
       <Swiper
-        modules={[Autoplay, Pagination, EffectFade]}
+        modules={[Autoplay, Pagination, EffectFade, Navigation]}
         spaceBetween={0}
         slidesPerView={1}
         loop={true}
@@ -60,13 +67,17 @@ function HeroBanner() {
         }}
         scrollbar={{ draggable: true }}
         pagination={false}
+        navigation={{
+          nextEl: ".swiper-button-next-hero",
+          prevEl: ".swiper-button-prev-hero",
+        }}
         effect="fade"
         className="h-full w-full"
       >
         {heroSlides.map((slide) => (
           <SwiperSlide key={slide.id} className="relative">
             <img
-              src={getImageUrl(slide.backdrop_path, 'original')}
+              src={getImageUrl(slide.backdrop_path, "original")}
               alt={slide.title || slide.name}
               className="w-full h-full object-cover"
             />
@@ -79,7 +90,7 @@ function HeroBanner() {
                 {slide.title || slide.name}
               </h1>
               <div className="flex items-center space-x-4 mb-2 md:mb-4 text-sm md:text-base text-brand-text-secondary">
-                <span>{slide.media_type?.toUpperCase() || 'MOVIE'}</span>
+                <span>{slide.media_type?.toUpperCase() || "MOVIE"}</span>
                 <span>
                   {new Date(
                     slide.release_date || slide.first_air_date
@@ -95,7 +106,7 @@ function HeroBanner() {
               </p>
               <div className="flex items-center space-x-3">
                 <Link
-                  to={`/${slide.media_type || 'movie'}/${slide.id}`}
+                  to={`/${slide.media_type || "movie"}/${slide.id}`}
                   className="bg-white/30 backdrop-blur-sm text-white px-4 py-2 md:px-6 md:py-2.5 rounded-full font-semibold flex items-center space-x-2 hover:bg-opacity-90 transition-colors text-sm md:text-base "
                 >
                   <PlayIcon className="w-5 h-5" />
@@ -119,6 +130,20 @@ function HeroBanner() {
           </SwiperSlide>
         ))}
       </Swiper>
+      <div className="swiper-pagination absolute bottom-12 right-2 space-x-2 hidden md:block lg:block">
+        <button
+          className="swiper-button-prev-hero  rounded-full p-2 cursor-pointer"
+          aria-label="Previous cast"
+        >
+          <ChevronLeftIcon className="w-6 h-6 text-brand-text-secondary hover:text-brand-yellow transition-colors" />
+        </button>
+        <button
+          className="swiper-button-next-hero  rounded-full p-2 cursor-pointer"
+          aria-label="Next cast"
+        >
+          <ChevronRightIcon className="w-6 h-6 text-brand-text-secondary hover:text-brand-yellow transition-colors" />
+        </button>
+      </div>
     </div>
   );
 }

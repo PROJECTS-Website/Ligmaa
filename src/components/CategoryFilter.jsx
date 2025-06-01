@@ -22,7 +22,7 @@ const CategoryFilter = ({ onCategoryChange, activeCategory }) => {
   };
 
   return (
-    <div className="relative py-3 px-2 md:px-4 mb-4">
+    <div className="py-3 px-2 md:px-4 mb-4 relative">
       <div
         ref={scrollContainerRef}
         className="flex items-center space-x-2 overflow-auto scrollbar-hide"
