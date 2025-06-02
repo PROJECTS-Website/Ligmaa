@@ -67,11 +67,10 @@ export const fetchGenreTVShows = (genreId, page = 1) =>
   export const fetchAnimeTV = (genreId = 16, page = 1) =>
     api.get("/discover/tv", {
       params: {
-        with_genres: `${genreId},16`,   // Always include Animation
-        with_origin_country: "JP",      // Japanese origin
+        with_genres: genreId,
+        with_origin_country: "JP",
         page,
       },
     });
-  
 
 export default api;

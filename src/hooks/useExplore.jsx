@@ -7,13 +7,18 @@ const defaultGenres = {
   anime: 16       // Animation
 };
 
+// Add this helper function at the top level
+const isValidGenre = (genreId, genresList) => {
+  return genresList.some(g => g.id === genreId);
+};
+
 const getDefaultGenreId = (query) => {
   return query === 'movie' ? defaultGenres.movie : 
          query === 'anime' ? defaultGenres.anime : 
          defaultGenres.tv;
 };
 
-export const useExplore = (query) => {
+export const useExplore = (query = 'movie') => {
   const [page, setPage] = useState(1);
   const [activeGenre, setActiveGenre] = useState(getDefaultGenreId(query));
   const [genres, setGenres] = useState([]);
@@ -21,91 +26,110 @@ export const useExplore = (query) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
   // Reset states when query changes
   useEffect(() => {
     setPage(1);
     setActiveGenre(getDefaultGenreId(query));
     setData({ results: [], total_pages: 0 });
+    setGenres([]);
+    setLoading(true);
+    
   }, [query]);
 
-  // Fetch genres based on media type
-  const fetchMediaGenres = useCallback(async () => {
+  // Fetch genres and set initial activeGenre
+  useEffect(() => {
     if (!query) return;
     
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (query === 'anime') {
-        // For anime, we'll use the TV show genres since anime is a type of TV show in TMDB
-        const response = await fetchGenres('anime');
-        setGenres(response.data.genres || []);
-      } else {
-        const mediaType = query === 'movie' ? 'movie' : 'tv';
+    const fetchMediaGenres = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const mediaType = query === 'anime' ? 'tv' : (query === 'movie' ? 'movie' : 'tv');
         const response = await fetchGenres(mediaType);
-        setGenres(response.data.genres || []);
-      }
-    } catch (err) {
-      console.error('Error fetching genres:', err);
-      setError(err.response?.data?.status_message || 'Failed to fetch genres');
-      setGenres([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [query]);
+        
+        const fetchedGenres = response.data.genres || [];
+        setGenres(fetchedGenres);
+        
+        if (fetchedGenres.length > 0) {
+          const defaultGenreId = getDefaultGenreId(query);
+          const genreExists = fetchedGenres.some(g => g.id === defaultGenreId);
+          const newActiveGenre = genreExists ? defaultGenreId : fetchedGenres[0]?.id;
 
-  // Fetch data based on current query, genre and page
-  const fetchData = useCallback(async () => {
-    if (!activeGenre || !query) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      let response;
-      
-      if (query === 'movie') {
-        response = await fetchGenreMovies(activeGenre, page);
-      } else if (query === 'anime') {
-        // For anime, we'll fetch TV shows with the animation genre
-        response = await fetchAnimeTV(activeGenre, page);
-      } else if (query === 'tv') {
-        response = await fetchGenreTVShows(activeGenre, page);
+          if (newActiveGenre) {
+            setActiveGenre(newActiveGenre);
+          }
+        }
+      } catch (err) {
+        console.error('❌ Error fetching genres:', {
+          error: err.message,
+          query,
+          response: err.response?.data
+        });
+        setError('Failed to load genres. Please try again later.');
+        setGenres([]);
+      } finally {
+        setLoading(false);
       }
-      
-      setData({
-        results: response.data.results || [],
-        total_pages: Math.min(response.data.total_pages || 1, 500) // TMDB max is 500
-      });
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err.response?.data?.status_message || 'Failed to fetch data');
-      setData({ results: [], total_pages: 0 });
-    } finally {
-      setLoading(false);
-    }
-  }, [query, activeGenre, page]);
-
-  // Fetch genres when component mounts or query changes
-  useEffect(() => {
+    };
+  
     fetchMediaGenres();
-  }, [fetchMediaGenres]);
-
+  }, [query]);
+  // Fetch data when activeGenre changes
   useEffect(() => {
-    if (!activeGenre) return;
-  
+    if (!activeGenre || !genres.length) return;
     const controller = new AbortController();
+    const signal = controller.signal;
+    
+    const fetchData = async () => {
+      try {
+        const currentGenreValid = isValidGenre(activeGenre, genres);
+
+        if (!currentGenreValid) {
+          console.warn('Invalid genre, falling back to default');
+          const defaultGenre = getDefaultGenreId(query);
+          setActiveGenre(genres.some(g => g.id === defaultGenre) ? defaultGenre : genres[0]?.id);
+          return;
+        }
   
-    const loadData = async () => {
-      await fetchData();
+        setLoading(true);
+        setError(null);
+        
+        let response;
+        
+        if (query === 'movie') {
+          response = await fetchGenreMovies(activeGenre, page, signal);
+        } else if (query === 'anime') {
+          response = await fetchAnimeTV(activeGenre, page, signal);
+        } else if (query === 'tv') {
+          response = await fetchGenreTVShows(activeGenre, page, signal);
+        }
+        
+        if (response) {
+          setData({
+            results: response.data.results || [],
+            total_pages: Math.min(response.data.total_pages || 1, 500)
+          });
+        }
+      } catch (err) {
+        console.error('❌ Error fetching data:', {
+          error: err.message,
+          query,
+          activeGenre,
+          page
+        });
+        setError(err.response?.data?.status_message || 'Failed to fetch data');
+        setData({ results: [], total_pages: 0 });
+      } finally {
+        setLoading(false);
+      }
     };
   
-    loadData();
-  
-    return () => {
-      controller.abort();
-    };
-  }, [fetchData, activeGenre, page]);
+    fetchData();
+
+    return () => controller.abort();
+  }, [activeGenre, page, query, genres]);
 
   // Handle genre change
   const handleGenreChange = useCallback((genreId) => {

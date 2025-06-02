@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
-import useFetch from '../hooks/useFetch';
-import { fetchDetails, getImageUrl } from '../services/tmdbApi';
-import VideoPlayerModal from '../components/VideoPlayerModal';
-import Spinner from '../components/Spinner';
-import MediaHeader from '../components/details/MediaHeader';
-import MediaInfo from '../components/details/MediaInfo';
-import MediaActions from '../components/details/MediaActions';
-import StreamPlayer from '../components/details/StreamPlayer';
-import CastSection from '../components/details/CastSection';
-import VideosSection from '../components/details/VideosSection';
-import RecommendationsSection from '../components/details/RecommendationsSection';
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/AppContext";
+import useFetch from "../hooks/useFetch";
+import { fetchDetails, getImageUrl } from "../services/tmdbApi";
+import VideoPlayerModal from "../components/VideoPlayerModal";
+import Spinner from "../components/Spinner";
+import MediaHeader from "../components/details/MediaHeader";
+import MediaInfo from "../components/details/MediaInfo";
+import StreamPlayer from "../components/details/StreamPlayer";
+import CastSection from "../components/details/CastSection";
+import VideosSection from "../components/details/VideosSection";
+import RecommendationsSection from "../components/details/RecommendationsSection";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { STREAMING_PROVIDERS } from "../services/streamingApi";
 
 const DetailsPage = () => {
   const { mediaType, id } = useParams();
@@ -22,6 +22,11 @@ const DetailsPage = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
+  const [selectedProvider, setSelectedProvider] = useState(
+    STREAMING_PROVIDERS[0]?.id || ""
+  );
+  const [streamError, setStreamError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [showStreamPlayer, setShowStreamPlayer] = useState(false);
 
   const {
@@ -36,8 +41,7 @@ const DetailsPage = () => {
     return {
       computedTitle: details.title || details.name,
       computedReleaseDate: details.release_date || details.first_air_date,
-      computedRuntime: details.runtime || 
-        (details.episode_run_time?.[0] || 0),
+      computedRuntime: details.runtime || details.episode_run_time?.[0] || 0,
       ...details,
     };
   }, [details]);
@@ -52,21 +56,33 @@ const DetailsPage = () => {
 
   // Handle stream URL
   const streamEmbedUrl = useMemo(() => {
+    const provider =
+      STREAMING_PROVIDERS.find((p) => p.id === selectedProvider) ||
+      STREAMING_PROVIDERS[0];
+    if (!provider) return null;
+
     if (mediaType === "movie" && id) {
-      return `https://vidsrc.cc/v2/embed/movie/${id}`;
-    } else if (mediaType === "tv" && id && selectedSeason > 0 && selectedEpisode > 0) {
-      return `https://vidsrc.cc/v2/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`;
+      return provider.getMovieUrl(id);
+    } else if (
+      mediaType === "tv" &&
+      id &&
+      selectedSeason > 0 &&
+      selectedEpisode > 0
+    ) {
+      return provider.getTvUrl(id, selectedSeason, selectedEpisode);
     }
     return null;
-  }, [mediaType, id, selectedSeason, selectedEpisode]);
+  }, [mediaType, id, selectedSeason, selectedEpisode, selectedProvider]);
 
   // Handle episodes for selected season
   const episodesForSelectedSeason = useMemo(() => {
     if (mediaType === "tv" && itemDetails?.seasons?.length) {
-      const season = itemDetails.seasons.find(s => s.season_number === selectedSeason);
-      return season?.episode_count ? 
-        Array.from({ length: season.episode_count }, (_, i) => i + 1) : 
-        [];
+      const season = itemDetails.seasons.find(
+        (s) => s.season_number === selectedSeason
+      );
+      return season?.episode_count
+        ? Array.from({ length: season.episode_count }, (_, i) => i + 1)
+        : [];
     }
     return [];
   }, [mediaType, itemDetails, selectedSeason]);
@@ -81,15 +97,17 @@ const DetailsPage = () => {
 
   // Navigation handlers
   const handleGoBack = () => navigate(-1);
-  
+
   const playTrailer = (key) => {
     setSelectedVideoKey(key);
     setShowVideoModal(true);
   };
 
   const handlePlayStream = () => {
-    if ((mediaType === "movie" && id) || 
-        (mediaType === "tv" && id && selectedSeason > 0 && selectedEpisode > 0)) {
+    if (
+      (mediaType === "movie" && id) ||
+      (mediaType === "tv" && id && selectedSeason > 0 && selectedEpisode > 0)
+    ) {
       setShowStreamPlayer(true);
     }
   };
@@ -139,15 +157,19 @@ const DetailsPage = () => {
   } = itemDetails;
 
   // Process videos and recommendations
-  const officialTrailers = videos.results
-    ?.filter(video => video.site === "YouTube" && 
-      (video.type === "Trailer" || video.type === "Teaser"))
-    .slice(0, 10) || [];
+  const officialTrailers =
+    videos.results
+      ?.filter(
+        (video) =>
+          video.site === "YouTube" &&
+          (video.type === "Trailer" || video.type === "Teaser")
+      )
+      .slice(0, 10) || [];
 
   const topCast = credits.cast?.slice(0, 15) || [];
-  const similarItems = recommendations.results
-    ?.filter(item => item.poster_path)
-    .slice(0, 15) || [];
+  const similarItems =
+    recommendations.results?.filter((item) => item.poster_path).slice(0, 15) ||
+    [];
 
   return (
     <div className="bg-brand-bg text-white min-h-screen pb-16 md:pb-8 overflow-x-hidden">
@@ -184,7 +206,11 @@ const DetailsPage = () => {
           numberOfSeasons={number_of_seasons}
           overview={overview}
           onPlayStream={handlePlayStream}
-          onPlayTrailer={officialTrailers[0] ? () => playTrailer(officialTrailers[0].key) : null}
+          onPlayTrailer={
+            officialTrailers[0]
+              ? () => playTrailer(officialTrailers[0].key)
+              : null
+          }
           hasStreamUrl={!!streamEmbedUrl}
           onImageError={(e) => handleImageError(e, getImageUrl(null, "w500"))}
         />
@@ -192,18 +218,83 @@ const DetailsPage = () => {
 
       {/* Stream Player */}
       {showStreamPlayer && streamEmbedUrl && (
-        <StreamPlayer
-          mediaType={mediaType}
-          title={itemTitle}
-          streamEmbedUrl={streamEmbedUrl}
-          seasons={seasons}
-          selectedSeason={selectedSeason}
-          selectedEpisode={selectedEpisode}
-          onSeasonChange={setSelectedSeason}
-          onEpisodeChange={setSelectedEpisode}
-          episodesForSelectedSeason={episodesForSelectedSeason}
-          onClose={() => setShowStreamPlayer(false)}
-        />
+        <div className="container mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12">
+          
+          {/* Error Message */}
+          {streamError && (
+            <div className="bg-red-900/50 text-red-200 p-3 flex justify-between items-center">
+              <span>{streamError}</span>
+              <button
+                onClick={() => {
+                  setStreamError(null);
+                  setRetryKey((prev) => prev + 1);
+                }}
+                className="ml-4 px-3 py-1 bg-red-800 hover:bg-red-700 rounded text-sm"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Stream Player */}
+          <StreamPlayer
+            key={`${streamEmbedUrl}-${retryKey}`}
+            mediaType={mediaType}
+            title={itemTitle}
+            streamEmbedUrl={streamEmbedUrl}
+            seasons={seasons}
+            selectedSeason={selectedSeason}
+            selectedEpisode={selectedEpisode}
+            onSeasonChange={(season) => {
+              setSelectedSeason(season);
+              setSelectedEpisode(1);
+            }}
+            onEpisodeChange={setSelectedEpisode}
+            episodesForSelectedSeason={episodesForSelectedSeason}
+            onClose={() => {
+              setShowStreamPlayer(false);
+              setStreamError(null);
+            }}
+            onError={(error) => {
+              console.error("Stream error:", error);
+              setStreamError(
+                `Failed to load stream from ${
+                  STREAMING_PROVIDERS.find((p) => p.id === selectedProvider)
+                    ?.name || "provider"
+                }. Trying another source...`
+              );
+
+              // Auto-switch to next provider on error
+              const currentIndex = STREAMING_PROVIDERS.findIndex(
+                (p) => p.id === selectedProvider
+              );
+              if (currentIndex < STREAMING_PROVIDERS.length - 1) {
+                setSelectedProvider(STREAMING_PROVIDERS[currentIndex + 1].id);
+              }
+            }}
+          />
+          {/* Provider Selection */}
+          <div className="flex flex-wrap gap-2 p-4 bg-zinc-900/80 rounded-t-lg">
+            {STREAMING_PROVIDERS.map((provider) => (
+              <button
+                key={provider.id}
+                onClick={() => {
+                  setSelectedProvider(provider.id);
+                  setStreamError(null);
+                  setRetryKey((prev) => prev + 1);
+                }}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  selectedProvider === provider.id
+                    ? "bg-brand-yellow text-black"
+                    : "bg-zinc-800 hover:bg-zinc-700 text-white"
+                }`}
+              >
+                {provider.name}
+              </button>
+            ))}
+          </div>
+
+        </div>
       )}
 
       {/* Cast Section */}
@@ -211,10 +302,7 @@ const DetailsPage = () => {
 
       {/* Videos Section */}
       {!showStreamPlayer && officialTrailers.length > 0 && (
-        <VideosSection
-          videos={officialTrailers}
-          onVideoSelect={playTrailer}
-        />
+        <VideosSection videos={officialTrailers} onVideoSelect={playTrailer} />
       )}
 
       {/* Recommendations Section */}

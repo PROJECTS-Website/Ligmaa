@@ -12,19 +12,18 @@ const StreamPlayer = ({
   onEpisodeChange,
   episodesForSelectedSeason,
   onClose,
+  onError,
 }) => {
   return (
-    <section className="container mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg md:text-3xl font-semibold">
-          Now Streaming: {title}
-          {mediaType === "tv" && ` - S${selectedSeason} E${selectedEpisode}`}
-        </h2>
+    <section className="container mx-auto md:px-8 lg:px-12 py-8 md:py-12">
+     <div className="flex justify-between items-center p-4 bg-black/50">
+        <h2 className="text-xl font-bold">{title}</h2>
         <button
           onClick={onClose}
-          className="text-sm text-brand-text-secondary hover:text-white inline-flex items-center"
+          className="p-2 hover:bg-white/10 rounded-full"
+          aria-label="Close player"
         >
-          <XMarkIcon className="w-5 h-5 mr-1" /> Close
+          <XMarkIcon className="w-6 h-6" />
         </button>
       </div>
 
@@ -80,14 +79,19 @@ const StreamPlayer = ({
           )}
         </div>
       )}
-      <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
-        <iframe
-          src={streamEmbedUrl}
-          title={`Streaming ${title || "Content"}`}
-          allowFullScreen
-          allow="autoplay; encrypted-media; picture-in-picture"
-          className="w-full h-full border-0"
-        ></iframe>
+      <div className="aspect-video flex flex-col bg-black rounded-lg overflow-hidden shadow-2xl">
+        <div className="flex-1 relative">
+        {streamEmbedUrl && (
+          <iframe
+            key={streamEmbedUrl}
+            src={streamEmbedUrl}
+            className="w-full h-full"
+            allowFullScreen
+            allow="autoplay; fullscreen"
+            onError={onError}
+          />
+        )}
+      </div>
       </div>
     </section>
   );

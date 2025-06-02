@@ -15,7 +15,7 @@ const ExplorePage = () => {
     data = { results: [], total_pages: 0 },
     loading,
     error,
-  } = useExplore(query);
+  } = useExplore(query); 
 
   // Show loading state
   if (loading && !data?.results?.length) {
