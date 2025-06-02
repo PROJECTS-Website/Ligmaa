@@ -117,7 +117,7 @@ const SearchModal = ({ isOpen, onClose }) => {
 
             {isLoading ? (
               <div className="mt-4 max-h-96 overflow-y-auto scrollbar-hide bg-zinc-900 px-3 py-3 rounded-md space-y-2">
-                {Array.from({ length: 3 }).map((_, ind) => (
+                {Array.from({ length: 4 }).map((_, ind) => (
                   <div className='flex items-center p-3 hover:bg-zinc-800 rounded-lg transition-colors animate-pulse bg-zinc-800 h-22' key={ind}></div>
                 ))}
                 
