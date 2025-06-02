@@ -183,13 +183,10 @@ const DetailsPage = () => {
           runtime={itemRuntime}
           numberOfSeasons={number_of_seasons}
           overview={overview}
-          onImageError={(e) => handleImageError(e, getImageUrl(null, "w500"))}
-        />
-
-        <MediaActions
           onPlayStream={handlePlayStream}
           onPlayTrailer={officialTrailers[0] ? () => playTrailer(officialTrailers[0].key) : null}
           hasStreamUrl={!!streamEmbedUrl}
+          onImageError={(e) => handleImageError(e, getImageUrl(null, "w500"))}
         />
       </div>
 

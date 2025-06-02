@@ -1,32 +1,56 @@
-// src/components/Header/Header.jsx (Example)
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import SearchBar from './SearchBar'; // Import SearchBar
+import { MagnifyingGlassIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import SearchModal from './SearchModal'; // Import the new SearchModal
 
-const Header = () => {
+const Header = ({ onMenuClick }) => {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-brand-bg/80 backdrop-blur-md shadow-md">
-      <div className="container max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold text-brand-yellow">
-          MovieApp
-        </Link>
+    <>
+      <header className="bg-black/30 sticky top-0 z-50 backdrop-blur-md shadow-md hidden md:block lg:block">
+        <div className="container max-w-7xl mx-auto px-3 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden text-gray-300 hover:text-white mr-2"
+              aria-label="Open menu"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+            <Link
+              to="/"
+              className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-red-600 bg-clip-text text-transparent"
+            >
+              MovieVerse
+            </Link>
+          </div>
 
-        {/* Desktop Search Bar */}
-        <div className="hidden md:flex justify-center flex-grow px-4">
-          <SearchBar />
-        </div>
+          <div className="flex items-center space-x-4">
+            {/* Desktop Search Button */}
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+              aria-label="Search"
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </button>
 
-        {/* Mobile: You might want a different search icon that expands into the SearchBar,
-            or place the SearchBar below the header on mobile in HomePage */}
-        <div className="md:hidden">
-          {/* Mobile menu icon or search icon could go here */}
+            {/* Mobile Search Button */}
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+              aria-label="Search"
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
-      </div>
-      {/* Mobile Search Bar (could be conditionally rendered or always visible below header) */}
-      <div className="md:hidden px-4 pb-3 pt-1 flex justify-center max-w-1/2">
-        <SearchBar />
-      </div>
-    </header>
+      </header>
+
+      {/* Search Modal */}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    </>
   );
 };
 

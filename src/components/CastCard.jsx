@@ -13,7 +13,7 @@ const CastCard = ({ actor }) => {
 
   return (
     <div className="flex flex-col items-center text-center w-full">
-      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden mb-2 shadow-lg border-2 border-gray-700">
+      <div className="size-20 md:size-28 rounded-full overflow-hidden mb-2 shadow-lg border-2 border-gray-700">
         <img
           src={getImageUrl(actor.profile_path, 'w185')}
           alt={actor.name}

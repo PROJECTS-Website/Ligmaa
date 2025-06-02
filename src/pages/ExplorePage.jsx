@@ -1,94 +1,146 @@
-import { useState } from "react";
-import MovieCard from "../components/MovieCard";
-import useFetch from "../hooks/useFetch";
-import {
-  fetchGenres,
-  fetchGenreMovies,
-  fetchGenreTVShows,
-} from "../services/tmdbApi";
 import { useParams } from "react-router-dom";
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import MovieCard from "../components/MovieCard";
 import Spinner from "../components/Spinner";
+import { useExplore } from "../hooks/useExplore";
 
 const ExplorePage = () => {
   const { query } = useParams();
-  const [activeGenre, setActiveGenre] = useState(
-    query === "movie" ? 12 : 10751
-  );
-  const [page, setPage] = useState(1);
-  const { data: genre } = useFetch(fetchGenres, query);
-  const { data, loading, error } = useFetch(
-    query === "movie" ? fetchGenreMovies : fetchGenreTVShows,
+  const {
+    page,
+    setPage,
     activeGenre,
-    page
-  );
+    setActiveGenre,
+    genres,
+    data = { results: [], total_pages: 0 },
+    loading,
+    error,
+  } = useExplore(query);
+
+  // Show loading state
+  if (loading && !data?.results?.length) {
+    return (
+      <div className="container mx-auto p-4 py-6 min-h-screen text-white pb-16">
+        <div className="text-center min-h-[550px] flex items-center justify-center w-full">
+          <p className="text-lg animate-pulse m-4 flex items-center gap-2">
+            <Spinner />
+            Loading {query === 'movie' ? 'Movies' : query === 'anime' ? 'Anime' : 'TV Shows'}...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="container mx-auto p-4 py-6 min-h-screen text-white pb-16">
+        <div className="text-center min-h-[250px] flex flex-col items-center justify-center">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">Error Loading Content</h2>
+          <p className="text-gray-300 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-white"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter out duplicate genres by ID
+  const uniqueGenres = genres?.filter((genre, index, self) => 
+    index === self.findIndex((g) => g.id === genre.id)
+  ) || [];
+
   return (
-    <div className="container mx-auto p-4 py-6 min-h-screen text-white">
+    <div className="container mx-auto p-4 py-6 min-h-screen text-white pb-16">
       <h1 className="text-2xl font-bold mb-4 text-left text-gray-200">
-        Explore {query === "show" ? "TV Shows" : "Movies"}
+        {query === "movie" ? "Movies" : query === "anime" ? "Anime" : "TV Shows"}
       </h1>
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-        {genre?.genres?.map((genre) => (
-          <div key={genre.id}>
-            <h2
-              className={`text-sm bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-md font-semibold mb-2 w-fit text-left text-gray-200 transition-colors whitespace-nowrap overflow-hidden text-ellipsis max-w-xs cursor-pointer ${
+      
+      {/* Genre Filters */}
+      <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+        {uniqueGenres?.map((genre) => (
+          <div key={genre.id} className="flex-shrink-0">
+            <button
+              className={`text-sm bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-md font-semibold mb-2 w-fit text-left text-gray-200 transition-all whitespace-nowrap overflow-hidden text-ellipsis max-w-xs cursor-pointer hover:bg-zinc-700 hover:border-yellow-500/50 ${
                 activeGenre === genre.id
-                  ? "bg-zinc-900/50 box-border !border-yellow-600"
+                  ? "bg-zinc-900/80 box-border border-yellow-500 text-yellow-400"
                   : ""
               }`}
               onClick={() => setActiveGenre(genre.id)}
+              disabled={loading}
             >
               {genre.name}
-            </h2>
+            </button>
           </div>
         ))}
       </div>
-      {activeGenre && (
-        <div>
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-left text-gray-200 my-4">
-              {genre?.genres?.find((g) => g.id === activeGenre)?.name}
+
+      {/* Main Content */}
+      <div className="mt-4">
+        <div className="flex sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-200">
+              {uniqueGenres?.find((g) => g.id === activeGenre)?.name || 'Popular'}
             </h2>
-            <div className="flex justify-center items-center">
-              <span className="text-sm font-semibold text-[#8f8f8f] mr-2">{page} - {data?.total_pages}</span>
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1 || data?.total_pages === page}
-                className="text-white px-2 py-2 rounded-md mr-1 disabled:opacity-50 cursor-pointer"
-              >
-                <ArrowLeftIcon className="size-5 stroke-2" />
-              </button>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={data?.total_pages === page}
-                className="text-white px-2 py-2 rounded-md disabled:opacity-50 cursor-pointer"
-              >
-                <ArrowRightIcon className="size-5 stroke-2" />
-              </button>
-            </div>
-          </div>
-          {loading && (
-             <div className="text-center min-h-[550px] flex items-center justify-center w-full">
-             <p className="text-lg animate-pulse m-4 flex items-center gap-2">
-               <Spinner />
-               Loading results...</p>
-           </div>
+            {query === 'anime' && (
+              <p className="text-sm text-gray-400 mt-1">
+                {data?.results?.length || 0} {data?.results?.length === 1 ? 'anime' : 'anime'} found
+              </p>
             )}
-            {error && (
-              <div className="text-center min-h-[250px] flex items-center justify-center w-full">
-                <p className="text-lg text-red-500">
-                  Error loading results: {error}
-                </p>
+          </div>
+          
+          {data?.total_pages > 0 && (
+            <div className="flex items-center space-x-2 bg-zinc-900/50 rounded-lg p-2">
+              <span className="text-sm text-gray-300">
+                Page {page} of {Math.min(500, data.total_pages)}
+              </span>
+              <div className="h-5 w-px bg-zinc-700 mx-1"></div>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1 || loading}
+                  className="p-1.5 rounded-md hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Previous page"
+                >
+                  <ArrowLeftIcon className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setPage(page + 1)}
+                  disabled={!data?.total_pages || page >= Math.min(500, data.total_pages) || loading}
+                  className="p-1.5 rounded-md hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Next page"
+                >
+                  <ArrowRightIcon className="w-4 h-4" />
+                </button>
               </div>
-            )}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {data?.results?.map((result) => (
-              <MovieCard key={result.id} item={result} mediaType={query} />
-            ))}
-            
-          </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Results Grid */}
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="bg-zinc-800 rounded-lg h-60 animate-pulse"></div>
+            ))}
+          </div>
+        ) : data?.results?.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {data.results.map((item) => (
+              <MovieCard key={item.id} item={item} mediaType={query} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-400">No results found. Try a different genre or check back later.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

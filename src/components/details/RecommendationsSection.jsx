@@ -9,9 +9,9 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const RecommendationsSection = ({ items, mediaType, title }) => {
   return (
-    <section className="container mx-2 md:mx-auto lg:mx-auto px-4 md:px-8 lg:px-12 py-5 md:py-12">
-      <div className="flex justify-between items-center mt-4">
-        <h2 className="text-2xl md:text-3xl -ml-4 font-semibold mb-2 md:mb-4">
+    <section className="container mx-2 md:mx-auto lg:mx-auto px-4 md:px-8 lg:px-12 py-5 md:py-6">
+      <div className="flex justify-between items-center mt-4 mb-4">
+        <h2 className="text-2xl md:text-3xl -ml-4 font-semibold">
           {title}
         </h2>
         <div className="items-center gap-2 hidden md:flex lg:flex">

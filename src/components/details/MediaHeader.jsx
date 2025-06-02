@@ -2,7 +2,7 @@ import React from 'react';
 
 const MediaHeader = ({ backdropPath, title, onImageError }) => {
   return (
-    <div className="relative h-[50vh] md:h-[70vh] w-full -mt-12 md:-mt-16">
+    <div className="relative h-[50vh] md:h-[70vh] w-full -mt-24 md:-mt-16">
       <img
         src={backdropPath}
         alt={`${title} backdrop`}

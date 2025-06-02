@@ -38,8 +38,15 @@ export const getImageUrl = (path, size = "original") => {
 };
 
 // Fetch genres - useful for filtering or displaying
-export const fetchGenres = (mediaType = "movie") =>
-  api.get(`/genre/${mediaType}/list`);
+export const fetchGenres = (mediaType = "movie") => {
+  const type = mediaType === "anime" ? "tv" : mediaType;
+  return api.get(`/genre/${type}/list`,{
+    params: {
+      with_original_language: "ja",
+    },
+  });
+};
+
 
 export const fetchGenreMovies = (genreId, page = 1) =>
   api.get("/discover/movie", {
@@ -57,13 +64,14 @@ export const fetchGenreTVShows = (genreId, page = 1) =>
     },
   });
 
-export const fetchAnimeTV = (page = 2) =>
-  api.get("/discover/tv", {
-    params: {
-      with_genres: 16, // Animation
-      with_original_language: "ja", // Japanese
-      page,
-    },
-  });
+  export const fetchAnimeTV = (genreId = 16, page = 1) =>
+    api.get("/discover/tv", {
+      params: {
+        with_genres: `${genreId},16`,   // Always include Animation
+        with_origin_country: "JP",      // Japanese origin
+        page,
+      },
+    });
+  
 
 export default api;

@@ -3,7 +3,7 @@ import { PlayIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const MediaActions = ({ onPlayStream, onPlayTrailer, hasStreamUrl }) => {
   return (
-    <div className="flex items-center flex-wrap gap-3 md:gap-4">
+    <div className="flex items-center flex-wrap gap-3 md:gap-4 lg:mt-4">
       <button
         onClick={onPlayStream}
         className="bg-brand-orange text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-semibold flex items-center space-x-2 hover:opacity-90 transition-opacity text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"

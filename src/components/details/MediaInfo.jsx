@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDaysIcon, ClockIcon } from '@heroicons/react/24/outline';
 import RatingCircle from '../RatingCircle';
+import MediaActions from './MediaActions';
 
 const MediaInfo = ({ 
   posterPath, 
@@ -15,6 +16,9 @@ const MediaInfo = ({
   runtime, 
   numberOfSeasons,
   overview,
+  onPlayStream,
+  onPlayTrailer,
+  hasStreamUrl,
   onImageError
 }) => {
   return (
@@ -28,7 +32,7 @@ const MediaInfo = ({
         />
       </div>
 
-      <div className="md:w-2/3 lg:w-3/4 pt-0 md:pt-10">
+      <div className="md:w-2/3 lg:w-3/4 pt-0 md:pt-2">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-1 md:mb-2">
           {title}
         </h1>
@@ -84,6 +88,11 @@ const MediaInfo = ({
             </p>
           </>
         )}
+        <MediaActions
+          onPlayStream={onPlayStream}
+          onPlayTrailer={onPlayTrailer}
+          hasStreamUrl={hasStreamUrl}
+        />
       </div>
     </div>
   );
