@@ -6,7 +6,7 @@ const categories = [
   { name: 'All', value: 'all', url:'/explore/movie' },
   { name: 'Movies', value: 'movie', url:'/explore/movie' },
   { name: 'TV Shows', value: 'tv', url:'/explore/tv' },
-  { name: 'Anime', value: 'anime', url:'/search' }, // 'anime' might need special handling / genre filtering
+  { name: 'Anime', value: 'anime', url:'/explore/anime' }, // 'anime' might need special handling / genre filtering
   // Add more categories if needed
   // { name: 'Trending', value: 'trending' },
   // { name: 'New Releases', value: 'new' },
