@@ -43,7 +43,7 @@ export const AppProvider = ({ children }) => {
   const getImageUrl = (path, size = 'w500') => {
     if (!apiConfig || !path) {
       // Return a placeholder or null if config not loaded or path is missing
-      return 'https://via.placeholder.com/500x750.png?text=No+Image';
+      return 'https://placehold.co/500x750';
     }
     // Ensure size is valid, otherwise use a default
     const SIZES = [

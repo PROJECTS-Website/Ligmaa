@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import useFetch from "../hooks/useFetch";
-import { searchMulti} from "../services/tmdbApi";
+import { searchMulti, fetchTrending } from "../services/tmdbApi";
 import MovieCard from "../components/MovieCard";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Spinner from "../components/Spinner";
@@ -15,7 +15,7 @@ const SearchPage = () => {
     decodeURIComponent(searchTerm),
     1
   );
-
+  const { data: trendingMovies } = useFetch(fetchTrending);
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
@@ -45,48 +45,51 @@ const SearchPage = () => {
         onSubmit={(e) => e.preventDefault()}
         className="mb-8 flex justify-center"
       >
-       <div className="relative w-full max-w-xl">
-       <MagnifyingGlassIcon className="size-5 stroke-2 text-gray-200 absolute left-3 top-1/2 transform -translate-y-1/2" />
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          placeholder="Search for a movie or TV series..."
-          className="w-full max-w-xl p-3 rounded-lg bg-[#222] text-white focus:outline-none pl-10"
-        />
-       </div>
+        <div className="relative w-full max-w-xl">
+          <MagnifyingGlassIcon className="size-5 stroke-2 text-gray-200 absolute left-3 top-1/2 transform -translate-y-1/2" />
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            placeholder="Search for a movie or TV series..."
+            className="w-full max-w-xl p-3 rounded-lg bg-[#222] text-white focus:outline-none pl-10"
+          />
+        </div>
       </form>
 
       {loading && (
-        <div className="text-center min-h-svh flex items-center justify-center">
-          <p className="text-lg animate-pulse m-4 flex items-center gap-2">
-            <Spinner />
-            Loading results...</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-4">
+          {[...Array(10)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-zinc-800 rounded-lg h-60 md:h-60 lg:h-64 animate-pulse"
+            ></div>
+          ))}
         </div>
       )}
 
       {!loading && data?.results?.length === 0 && searchTerm.trim() !== "" && (
         <div className="text-center">
           <p className="text-lg">No results found for \"{searchTerm}\".</p>
-        </div>  
+        </div>
       )}
 
-      {
-        error && (
+      {error && (
+        <div className="text-center">
+          <p className="text-lg text-red-500">Error loading results: {error}</p>
+        </div>
+      )}
+      {!loading &&
+        !trendingMovies?.results?.length &&
+        searchTerm.trim() === "" && (
           <div className="text-center">
-            <p className="text-lg text-red-500">Error loading results: {error}</p>
+            <p className="text-xl text-[#8f8f8f] ">
+              Enter a search term to get started.
+            </p>
           </div>
-        )
-      }
-      {
-        !loading && data?.results?.length === 0 && searchTerm.trim() === "" && (
-          <div className="text-center">
-            <p className="text-xl text-[#8f8f8f] ">Enter a search term to get started.</p>
-          </div>
-        )
-      }
-      {!loading && data?.results?.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        )}
+      {!loading && data?.results?.length > 0 && searchTerm.trim() !== "" ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-6">
           {data?.results?.map((result) => (
             <MovieCard
               key={result.id}
@@ -94,6 +97,21 @@ const SearchPage = () => {
               mediaType={result.media_type}
             />
           ))}
+        </div>
+      ) : (
+        <div>
+          <h2 className="text-xl font-semibold text-gray-200 mb-4">
+            Trending Now
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-6">
+            {trendingMovies?.results?.map((result) => (
+              <MovieCard
+                key={result.id}
+                item={result}
+                mediaType={result.media_type}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

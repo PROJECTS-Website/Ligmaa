@@ -3,6 +3,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import MovieCard from "../components/MovieCard";
 import Spinner from "../components/Spinner";
 import { useExplore } from "../hooks/useExplore";
+import { useEffect } from "react";
 
 const ExplorePage = () => {
   const { query } = useParams();
@@ -16,6 +17,12 @@ const ExplorePage = () => {
     loading,
     error,
   } = useExplore(query); 
+
+  useEffect(() => {
+    setActiveGenre(null);
+    setPage(1);
+    window.scrollTo(0, 0);
+  }, [query]);
 
   // Show loading state
   if (loading && !data?.results?.length) {

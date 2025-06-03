@@ -40,7 +40,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                     location.pathname === item.path
                       ? ' text-yellow-500'
-                      : 'text-gray-300 hover:bg-gray-800/50'
+                      : 'text-gray-300 hover:bg-zinc-800'
                   }`}
                   onClick={onClose}
                 >
@@ -58,7 +58,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className={`flex items-center px-4 py-3 rounded-lg transition-colors ${ 
                     location.pathname === item.path
                       ? 'text-yellow-500'
-                      : 'text-gray-300 hover:bg-gray-800/50'
+                      : 'text-gray-300 hover:bg-zinc-800'
                   }`}
                   onClick={onClose}
                 >
