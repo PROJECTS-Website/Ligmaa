@@ -28,12 +28,12 @@ const DetailsPage = () => {
   const [streamError, setStreamError] = useState(null);
   const [retryKey, setRetryKey] = useState(0);
   const [showStreamPlayer, setShowStreamPlayer] = useState(false);
-
+  const type = mediaType === "anime" ? "tv" : mediaType; 
   const {
     data: details,
     loading: detailsLoading,
     error: detailsError,
-  } = useFetch(fetchDetails, mediaType, id);
+  } = useFetch(fetchDetails, type, id);
 
   // Process item details
   const itemDetails = useMemo(() => {
@@ -61,10 +61,10 @@ const DetailsPage = () => {
       STREAMING_PROVIDERS[0];
     if (!provider) return null;
 
-    if (mediaType === "movie" && id) {
+    if (type === "movie" && id) {
       return provider.getMovieUrl(id);
     } else if (
-      mediaType === "tv" &&
+      type === "tv" &&
       id &&
       selectedSeason > 0 &&
       selectedEpisode > 0
@@ -72,11 +72,11 @@ const DetailsPage = () => {
       return provider.getTvUrl(id, selectedSeason, selectedEpisode);
     }
     return null;
-  }, [mediaType, id, selectedSeason, selectedEpisode, selectedProvider]);
+  }, [type, id, selectedSeason, selectedEpisode, selectedProvider]);
 
   // Handle episodes for selected season
   const episodesForSelectedSeason = useMemo(() => {
-    if (mediaType === "tv" && itemDetails?.seasons?.length) {
+    if (type === "tv" && itemDetails?.seasons?.length) {
       const season = itemDetails.seasons.find(
         (s) => s.season_number === selectedSeason
       );
@@ -85,7 +85,7 @@ const DetailsPage = () => {
         : [];
     }
     return [];
-  }, [mediaType, itemDetails, selectedSeason]);
+  }, [type, itemDetails, selectedSeason]);
 
   // Reset state when mediaType or id changes
   useEffect(() => {
@@ -93,7 +93,7 @@ const DetailsPage = () => {
     setShowStreamPlayer(false);
     setSelectedSeason(1);
     setSelectedEpisode(1);
-  }, [mediaType, id]);
+  }, [type, id]);
 
   // Navigation handlers
   const handleGoBack = () => navigate(-1);
@@ -105,8 +105,8 @@ const DetailsPage = () => {
 
   const handlePlayStream = () => {
     if (
-      (mediaType === "movie" && id) ||
-      (mediaType === "tv" && id && selectedSeason > 0 && selectedEpisode > 0)
+      (type === "movie" && id) ||
+      (type === "tv" && id && selectedSeason > 0 && selectedEpisode > 0)
     ) {
       setShowStreamPlayer(true);
     }

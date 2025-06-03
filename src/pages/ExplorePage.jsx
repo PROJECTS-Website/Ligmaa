@@ -66,7 +66,7 @@ const ExplorePage = () => {
         {uniqueGenres?.map((genre) => (
           <div key={genre.id} className="flex-shrink-0">
             <button
-              className={`text-sm bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-md font-semibold mb-2 w-fit text-left text-gray-200 transition-all whitespace-nowrap overflow-hidden text-ellipsis max-w-xs cursor-pointer hover:bg-zinc-700 hover:border-yellow-500/50 ${
+              className={`text-sm bg-zinc-800 border border-zinc-800 px-4 py-2 rounded-md font-semibold mb-2 w-fit text-left text-gray-200 transition-all whitespace-nowrap overflow-hidden text-ellipsis max-w-xs cursor-pointer hover:bg-zinc-700 ${
                 activeGenre === genre.id
                   ? "bg-zinc-900/80 box-border border-yellow-500 text-yellow-400"
                   : ""
@@ -126,7 +126,7 @@ const ExplorePage = () => {
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {[...Array(10)].map((_, i) => (
-              <div key={i} className="bg-zinc-800 rounded-lg h-60 animate-pulse"></div>
+              <div key={i} className="bg-zinc-800 rounded-lg h-60 md:h-50 animate-pulse"></div>
             ))}
           </div>
         ) : data?.results?.length > 0 ? (

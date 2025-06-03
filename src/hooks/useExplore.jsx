@@ -1,149 +1,166 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchGenres, fetchGenreMovies, fetchGenreTVShows, fetchAnimeTV } from '../services/tmdbApi';
+import {
+  fetchGenres,
+  fetchGenreMovies,
+  fetchGenreTVShows,
+  fetchAnimeTV,
+} from '../services/tmdbApi';
 
 const defaultGenres = {
-  movie: 28,      // Action
-  tv: 10759,      // Action & Adventure
-  anime: 16       // Animation
-};
-
-// Add this helper function at the top level
-const isValidGenre = (genreId, genresList) => {
-  return genresList.some(g => g.id === genreId);
+  movie: 28,  // Action
+  tv: 10759,  // Action & Adventure
+  anime: 16,  // Animation
 };
 
 const getDefaultGenreId = (query) => {
-  return query === 'movie' ? defaultGenres.movie : 
-         query === 'anime' ? defaultGenres.anime : 
-         defaultGenres.tv;
+  if (query === 'movie') return defaultGenres.movie;
+  if (query === 'anime') return defaultGenres.anime;
+  return defaultGenres.tv;
+};
+
+// Utility to check if a genreId exists in the array
+const isValidGenre = (genreId, genresList) => {
+  return genresList.some((g) => g.id === genreId);
 };
 
 export const useExplore = (query = 'movie') => {
   const [page, setPage] = useState(1);
-  const [activeGenre, setActiveGenre] = useState(getDefaultGenreId(query));
+  const [activeGenre, setActiveGenre] = useState(null);
   const [genres, setGenres] = useState([]);
   const [data, setData] = useState({ results: [], total_pages: 0 });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-
-  // Reset states when query changes
+  // reseting states when query changes
   useEffect(() => {
     setPage(1);
-    setActiveGenre(getDefaultGenreId(query));
-    setData({ results: [], total_pages: 0 });
+    setActiveGenre(null);
     setGenres([]);
+    setData({ results: [], total_pages: 0 });
+    setError(null);
     setLoading(true);
-    
   }, [query]);
 
-  // Fetch genres and set initial activeGenre
   useEffect(() => {
     if (!query) return;
-    
-    const fetchMediaGenres = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const mediaType = query === 'anime' ? 'tv' : (query === 'movie' ? 'movie' : 'tv');
-        const response = await fetchGenres(mediaType);
-        
-        const fetchedGenres = response.data.genres || [];
-        setGenres(fetchedGenres);
-        
-        if (fetchedGenres.length > 0) {
-          const defaultGenreId = getDefaultGenreId(query);
-          const genreExists = fetchedGenres.some(g => g.id === defaultGenreId);
-          const newActiveGenre = genreExists ? defaultGenreId : fetchedGenres[0]?.id;
-
-          if (newActiveGenre) {
-            setActiveGenre(newActiveGenre);
-          }
-        }
-      } catch (err) {
-        console.error('❌ Error fetching genres:', {
-          error: err.message,
-          query,
-          response: err.response?.data
-        });
-        setError('Failed to load genres. Please try again later.');
-        setGenres([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchMediaGenres();
-  }, [query]);
-  // Fetch data when activeGenre changes
-  useEffect(() => {
-    if (!activeGenre || !genres.length) return;
     const controller = new AbortController();
     const signal = controller.signal;
-    
-    const fetchData = async () => {
-      try {
-        const currentGenreValid = isValidGenre(activeGenre, genres);
 
-        if (!currentGenreValid) {
-          console.warn('Invalid genre, falling back to default');
-          const defaultGenre = getDefaultGenreId(query);
-          setActiveGenre(genres.some(g => g.id === defaultGenre) ? defaultGenre : genres[0]?.id);
+    const loadGenresAndFirstPage = async () => {
+      setError(null);
+
+      try {
+        const mediaType = query === 'anime' ? 'tv' : query; 
+        const res = await fetchGenres(mediaType, { signal });
+        const fetchedGenres = res.data.genres || [];
+        setGenres(fetchedGenres);
+
+        if (fetchedGenres.length === 0) {
+          setActiveGenre(null);
+          setData({ results: [], total_pages: 0 });
+          setError('No genres found.');
+          setLoading(false);
           return;
         }
-  
-        setLoading(true);
-        setError(null);
-        
-        let response;
-        
+
+        const desiredDefault = getDefaultGenreId(query);
+        const pick = isValidGenre(desiredDefault, fetchedGenres)
+          ? desiredDefault
+          : fetchedGenres[0].id;
+        setActiveGenre(pick);
+
+        let dataRes;
         if (query === 'movie') {
-          response = await fetchGenreMovies(activeGenre, page, signal);
+          dataRes = await fetchGenreMovies(pick, 1, signal);
         } else if (query === 'anime') {
-          response = await fetchAnimeTV(activeGenre, page, signal);
-        } else if (query === 'tv') {
-          response = await fetchGenreTVShows(activeGenre, page, signal);
+          dataRes = await fetchAnimeTV(pick, 1, signal);
+        } else {
+          dataRes = await fetchGenreTVShows(pick, 1, signal);
         }
-        
-        if (response) {
-          setData({
-            results: response.data.results || [],
-            total_pages: Math.min(response.data.total_pages || 1, 500)
-          });
-        }
-      } catch (err) {
-        console.error('❌ Error fetching data:', {
-          error: err.message,
-          query,
-          activeGenre,
-          page
+
+        setData({
+          results: dataRes.data.results || [],
+          total_pages: Math.min(dataRes.data.total_pages || 1, 500),
         });
-        setError(err.response?.data?.status_message || 'Failed to fetch data');
-        setData({ results: [], total_pages: 0 });
+      } catch (err) {
+        if (!signal.aborted) {
+          // handle real errors
+          setError(err.response?.data?.status_message || 'Failed to load genres or data');
+          setData({ results: [], total_pages: 0 });
+        }
       } finally {
-        setLoading(false);
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
     };
-  
-    fetchData();
 
-    return () => controller.abort();
-  }, [activeGenre, page, query, genres]);
+    loadGenresAndFirstPage();
 
-  // Handle genre change
-  const handleGenreChange = useCallback((genreId) => {
-    setActiveGenre(genreId);
-    setPage(1);
-  }, []);
+    return () => {
+      controller.abort();
+    };
+  }, [query]);
 
-  // Handle page change
-  const handlePageChange = useCallback((newPage) => {
-    if (newPage >= 1 && newPage <= (data?.total_pages || 1)) {
+  useEffect(() => {
+    if (!activeGenre) return;
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const loadPage = async () => {
+      setError(null);
+
+      try {
+        let res;
+        if (query === 'movie') {
+          res = await fetchGenreMovies(activeGenre, page, signal);
+        } else if (query === 'anime') {
+          res = await fetchAnimeTV(activeGenre, page, signal);
+        } else {
+          res = await fetchGenreTVShows(activeGenre, page, signal);
+        }
+
+        setData({
+          results: res.data.results || [],
+          total_pages: Math.min(res.data.total_pages || 1, 500),
+        });
+      } catch (err) {
+        if (!signal.aborted) {
+          // handle real er rors
+          setError(err.response?.data?.status_message || 'Failed to fetch data');
+          setData({ results: [], total_pages: 0 });
+        }
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPage();
+    return () => {
+      controller.abort();
+    };
+  }, [activeGenre, page, query]);
+
+  const handleGenreChange = useCallback(
+    (genreId) => {
+      if (genreId === activeGenre) return;
+      setPage(1);
+      setActiveGenre(genreId);
+    },
+    [activeGenre]
+  );
+
+  const handlePageChange = useCallback(
+    (newPage) => {
+      if (newPage < 1 || newPage > (data.total_pages || 1)) return;
       setPage(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [data?.total_pages]);
+    },
+    [data.total_pages]
+  );
 
   return {
     page,
@@ -154,6 +171,6 @@ export const useExplore = (query = 'movie') => {
     data,
     loading,
     error,
-    defaultGenres
+    defaultGenres,
   };
 };

@@ -13,7 +13,7 @@ const Header = ({ onMenuClick }) => {
           <div className="flex items-center space-x-4">
             <button
               onClick={onMenuClick}
-              className="lg:hidden text-gray-300 hover:text-white mr-2"
+              className="lg:hidden md:hidden text-gray-300 hover:text-white mr-2"
               aria-label="Open menu"
             >
               <Bars3Icon className="h-6 w-6" />
