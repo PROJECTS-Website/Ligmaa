@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   fetchGenres,
   fetchGenreMovies,
@@ -24,6 +24,9 @@ export const useExplore = (query = 'movie') => {
   const [data, setData] = useState({ results: [], total_pages: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  const isInitialLoad = useRef(true);
+  const currentQuery = useRef(query);
 
   const getDefaultGenreId = (query) => {
     if (query === 'movie') return defaultGenres.movie;
@@ -33,12 +36,19 @@ export const useExplore = (query = 'movie') => {
 
   useEffect(() => {
     if (!query) return;
-    setLoading(true);
-    setError(null);
-    setPage(1);
-    setGenres([]);
-    setData({ results: [], total_pages: 0 });
-    setActiveGenre(null);
+    
+    const queryChanged = currentQuery.current !== query;
+    currentQuery.current = query;
+    
+    if (queryChanged || isInitialLoad.current) {
+      setLoading(true);
+      setError(null);
+      setPage(1);
+      setGenres([]);
+      setData({ results: [], total_pages: 0 });
+      setActiveGenre(null);
+      isInitialLoad.current = false;
+    }
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -54,13 +64,14 @@ export const useExplore = (query = 'movie') => {
           setActiveGenre(null);
           setData({ results: [], total_pages: 0 });
           setError('No genres found.');
-          setLoading(false);
           return;
         }
+
         const desiredDefault = getDefaultGenreId(query);
         const pick = isValidGenre(desiredDefault, fetchedGenres)
           ? desiredDefault
           : fetchedGenres[0].id;
+        
         setActiveGenre(pick);
 
         let dataRes;
@@ -88,21 +99,26 @@ export const useExplore = (query = 'movie') => {
       }
     };
 
-    loadGenresAndFirstPage();
+    // Only run if this is a query change or initial load
+    if (queryChanged || isInitialLoad.current === false) {
+      loadGenresAndFirstPage();
+    }
 
     return () => {
       controller.abort();
     };
   }, [query]);
 
-
+  // Effect for handling page changes and genre changes (but not initial load)
   useEffect(() => {
-    if (!activeGenre) return;
+    // Skip if no active genre, or if this is part of the initial load
+    if (!activeGenre || isInitialLoad.current) return;
 
     const controller = new AbortController();
     const signal = controller.signal;
 
     const loadPage = async () => {
+      setLoading(true);
       setError(null);
 
       try {
@@ -121,7 +137,6 @@ export const useExplore = (query = 'movie') => {
         });
       } catch (err) {
         if (!signal.aborted) {
-          // handle real er rors
           setError(err.response?.data?.status_message || 'Failed to fetch data');
           setData({ results: [], total_pages: 0 });
         }
