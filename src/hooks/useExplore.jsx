@@ -12,12 +12,6 @@ const defaultGenres = {
   anime: 16,  // Animation
 };
 
-const getDefaultGenreId = (query) => {
-  if (query === 'movie') return defaultGenres.movie;
-  if (query === 'anime') return defaultGenres.anime;
-  return defaultGenres.tv;
-};
-
 // Utility to check if a genreId exists in the array
 const isValidGenre = (genreId, genresList) => {
   return genresList.some((g) => g.id === genreId);
@@ -31,26 +25,27 @@ export const useExplore = (query = 'movie') => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-    // reseting states when query changes
-    useEffect(() => {
-      setPage(1);
-      setActiveGenre(null);
-      setGenres([]);
-      setData({ results: [], total_pages: 0 });
-      setError(null);
-      setLoading(true);
-    }, [query]);
+  const getDefaultGenreId = (query) => {
+    if (query === 'movie') return defaultGenres.movie;
+    if (query === 'anime') return defaultGenres.anime;
+    return defaultGenres.tv;
+  };
 
   useEffect(() => {
     if (!query) return;
+    setLoading(true);
+    setError(null);
+    setPage(1);
+    setGenres([]);
+    setData({ results: [], total_pages: 0 });
+    setActiveGenre(null);
+
     const controller = new AbortController();
     const signal = controller.signal;
 
     const loadGenresAndFirstPage = async () => {
-      setError(null);
-
       try {
-        const mediaType = query === 'anime' ? 'tv' : query; 
+        const mediaType = query === 'anime' ? 'tv' : query;
         const res = await fetchGenres(mediaType, { signal });
         const fetchedGenres = res.data.genres || [];
         setGenres(fetchedGenres);
@@ -62,7 +57,6 @@ export const useExplore = (query = 'movie') => {
           setLoading(false);
           return;
         }
-
         const desiredDefault = getDefaultGenreId(query);
         const pick = isValidGenre(desiredDefault, fetchedGenres)
           ? desiredDefault
@@ -84,7 +78,6 @@ export const useExplore = (query = 'movie') => {
         });
       } catch (err) {
         if (!signal.aborted) {
-          // handle real errors
           setError(err.response?.data?.status_message || 'Failed to load genres or data');
           setData({ results: [], total_pages: 0 });
         }
@@ -101,6 +94,7 @@ export const useExplore = (query = 'movie') => {
       controller.abort();
     };
   }, [query]);
+
 
   useEffect(() => {
     if (!activeGenre) return;

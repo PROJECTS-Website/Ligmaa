@@ -92,16 +92,11 @@ const ExplorePage = () => {
             <h2 className="text-xl font-semibold text-gray-200">
               {uniqueGenres?.find((g) => g.id === activeGenre)?.name || 'Popular'}
             </h2>
-            {query === 'anime' && (
-              <p className="text-sm text-gray-400 mt-1">
-                {data?.results?.length || 0} {data?.results?.length === 1 ? 'anime' : 'anime'} found
-              </p>
-            )}
           </div>
           
           {data?.total_pages > 0 && (
             <div className="flex items-center space-x-2 bg-zinc-900/50 rounded-lg p-2">
-              <span className="text-sm text-gray-300 min-w-[100px]">
+              <span className="text-sm text-gray-300 min-w-[88px]">
                 Page {page} of {Math.min(500, data.total_pages)}
               </span>
               <div className="h-5 w-px bg-zinc-700 mx-1"></div>
