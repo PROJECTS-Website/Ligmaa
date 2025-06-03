@@ -38,7 +38,7 @@ const BottomNav = () => {
               `flex flex-col items-center justify-center p-2 flex-1 transition-colors ${
                 isActive(item.path) 
                   ? 'text-yellow-500' 
-                  : 'text-gray-400 hover:text-white'
+                  : 'text-gray-300 hover:text-white'
               }`
             }
           >

@@ -22,7 +22,7 @@ export default defineConfig({
         icons: [
           {
             src: '/logo.svg',
-            sizes: 'any',
+            sizes: '256x256',
             type: 'image/svg+xml',
             purpose: 'any maskable'
           },

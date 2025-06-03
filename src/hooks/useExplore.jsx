@@ -7,15 +7,12 @@ import {
 } from '../services/tmdbApi';
 
 const defaultGenres = {
-  movie: 28,  // Action
-  tv: 10759,  // Action & Adventure
-  anime: 16,  // Animation
+  movie: 28,
+  tv: 10759,
+  anime: 16,
 };
 
-// Utility to check if a genreId exists in the array
-const isValidGenre = (genreId, genresList) => {
-  return genresList.some((g) => g.id === genreId);
-};
+const isValidGenre = (genreId, genresList) => genresList.some((g) => g.id === genreId);
 
 export const useExplore = (query = 'movie') => {
   const [page, setPage] = useState(1);
@@ -25,104 +22,122 @@ export const useExplore = (query = 'movie') => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  const isInitialLoad = useRef(true);
+  const requestId = useRef(0);
+  const isInitializingGenres = useRef(false); // Flag to prevent race conditions
   const currentQuery = useRef(query);
 
-  const getDefaultGenreId = (query) => {
-    if (query === 'movie') return defaultGenres.movie;
-    if (query === 'anime') return defaultGenres.anime;
+  // Get the default genre ID for the current query
+  const getDefaultGenreId = (mediaType) => {
+    if (mediaType === 'movie') return defaultGenres.movie;
+    if (mediaType === 'anime') return defaultGenres.anime;
     return defaultGenres.tv;
   };
 
+  // Handle query changes
   useEffect(() => {
-    if (!query) return;
-    
-    const queryChanged = currentQuery.current !== query;
+    // Check if query actually changed
+    const hasQueryChanged = currentQuery.current !== query;
     currentQuery.current = query;
     
-    if (queryChanged || isInitialLoad.current) {
-      setLoading(true);
-      setError(null);
-      setPage(1);
-      setGenres([]);
-      setData({ results: [], total_pages: 0 });
-      setActiveGenre(null);
-      isInitialLoad.current = false;
-    }
-
+    let isMounted = true;
+    const thisRequest = ++requestId.current;
     const controller = new AbortController();
     const signal = controller.signal;
 
-    const loadGenresAndFirstPage = async () => {
+    const loadInitialData = async () => {
+      // Set flag to prevent second effect from running during initialization
+      isInitializingGenres.current = true;
+      
+      setLoading(true);
+      setError(null);
+      setPage(1);
+      setData({ results: [], total_pages: 0 });
+      setActiveGenre(null); // Reset active genre first
+
       try {
+        // 1. First fetch genres
         const mediaType = query === 'anime' ? 'tv' : query;
-        const res = await fetchGenres(mediaType, { signal });
-        const fetchedGenres = res.data.genres || [];
+        const genresRes = await fetchGenres(mediaType, { signal });
+        
+        if (!isMounted || thisRequest !== requestId.current) return;
+        
+        const fetchedGenres = genresRes.data.genres || [];
         setGenres(fetchedGenres);
 
         if (fetchedGenres.length === 0) {
-          setActiveGenre(null);
-          setData({ results: [], total_pages: 0 });
           setError('No genres found.');
+          setLoading(false);
+          isInitializingGenres.current = false;
           return;
         }
 
-        const desiredDefault = getDefaultGenreId(query);
-        const pick = isValidGenre(desiredDefault, fetchedGenres)
-          ? desiredDefault
+        // 2. Determine which genre to select
+        const defaultGenreId = getDefaultGenreId(query);
+        const selectedGenreId = isValidGenre(defaultGenreId, fetchedGenres)
+          ? defaultGenreId
           : fetchedGenres[0].id;
-        
-        setActiveGenre(pick);
 
+        // 3. Fetch data for the selected genre directly here
         let dataRes;
         if (query === 'movie') {
-          dataRes = await fetchGenreMovies(pick, 1, signal);
+          dataRes = await fetchGenreMovies(selectedGenreId, 1, signal);
         } else if (query === 'anime') {
-          dataRes = await fetchAnimeTV(pick, 1, signal);
+          dataRes = await fetchAnimeTV(selectedGenreId, 1, signal);
         } else {
-          dataRes = await fetchGenreTVShows(pick, 1, signal);
+          dataRes = await fetchGenreTVShows(selectedGenreId, 1, signal);
         }
 
+        if (!isMounted || thisRequest !== requestId.current) return;
+
+        // 4. Set both the data and active genre together
         setData({
           results: dataRes.data.results || [],
           total_pages: Math.min(dataRes.data.total_pages || 1, 500),
         });
+        setActiveGenre(selectedGenreId);
+
       } catch (err) {
-        if (!signal.aborted) {
-          setError(err.response?.data?.status_message || 'Failed to load genres or data');
+        if (!signal.aborted && isMounted && thisRequest === requestId.current) {
+          setError(err.response?.data?.status_message || 'Failed to load data');
           setData({ results: [], total_pages: 0 });
         }
       } finally {
-        if (!signal.aborted) {
+        if (isMounted && thisRequest === requestId.current) {
           setLoading(false);
+          isInitializingGenres.current = false; // Reset flag
         }
       }
     };
 
-    // Only run if this is a query change or initial load
-    if (queryChanged || isInitialLoad.current === false) {
-      loadGenresAndFirstPage();
+    // Only run if query changed or it's the initial load
+    if (hasQueryChanged || activeGenre === null) {
+      loadInitialData();
     }
 
     return () => {
+      isMounted = false;
       controller.abort();
     };
   }, [query]);
 
-  // Effect for handling page changes and genre changes (but not initial load)
+  // Handle data fetching when activeGenre or page changes (but NOT during initialization)
   useEffect(() => {
-    // Skip if no active genre, or if this is part of the initial load
-    if (!activeGenre || isInitialLoad.current) return;
+    // Skip if no active genre, or if we're initializing genres, or if it's page 1 and we just set the genre
+    if (!activeGenre || isInitializingGenres.current) return;
 
+    let isMounted = true;
+    const thisRequest = ++requestId.current;
     const controller = new AbortController();
     const signal = controller.signal;
 
-    const loadPage = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
 
       try {
         let res;
+        console.log("Fetching data for activeGenre:", activeGenre, "page:", page, "query:", query);
+        
         if (query === 'movie') {
           res = await fetchGenreMovies(activeGenre, page, signal);
         } else if (query === 'anime') {
@@ -131,45 +146,45 @@ export const useExplore = (query = 'movie') => {
           res = await fetchGenreTVShows(activeGenre, page, signal);
         }
 
+        if (!isMounted || thisRequest !== requestId.current) return;
+
         setData({
           results: res.data.results || [],
           total_pages: Math.min(res.data.total_pages || 1, 500),
         });
       } catch (err) {
-        if (!signal.aborted) {
+        if (!signal.aborted && isMounted && thisRequest === requestId.current) {
           setError(err.response?.data?.status_message || 'Failed to fetch data');
           setData({ results: [], total_pages: 0 });
         }
       } finally {
-        if (!signal.aborted) {
+        if (isMounted && thisRequest === requestId.current) {
           setLoading(false);
         }
       }
     };
 
-    loadPage();
+    fetchData();
+
     return () => {
+      isMounted = false;
       controller.abort();
     };
   }, [activeGenre, page, query]);
 
-  const handleGenreChange = useCallback(
-    (genreId) => {
-      if (genreId === activeGenre) return;
-      setPage(1);
-      setActiveGenre(genreId);
-    },
-    [activeGenre]
-  );
+  // Handle genre change
+  const handleGenreChange = useCallback((genreId) => {
+    if (genreId === activeGenre) return;
+    setPage(1);
+    setActiveGenre(genreId);
+  }, [activeGenre]);
 
-  const handlePageChange = useCallback(
-    (newPage) => {
-      if (newPage < 1 || newPage > (data.total_pages || 1)) return;
-      setPage(newPage);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-    [data.total_pages]
-  );
+  // Handle page change
+  const handlePageChange = useCallback((newPage) => {
+    if (newPage < 1 || newPage > (data.total_pages || 1)) return;
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [data.total_pages]);
 
   return {
     page,
@@ -180,6 +195,5 @@ export const useExplore = (query = 'movie') => {
     data,
     loading,
     error,
-    defaultGenres,
   };
 };
