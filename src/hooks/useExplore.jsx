@@ -31,15 +31,15 @@ export const useExplore = (query = 'movie') => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // reseting states when query changes
-  useEffect(() => {
-    setPage(1);
-    setActiveGenre(null);
-    setGenres([]);
-    setData({ results: [], total_pages: 0 });
-    setError(null);
-    setLoading(true);
-  }, [query]);
+    // reseting states when query changes
+    useEffect(() => {
+      setPage(1);
+      setActiveGenre(null);
+      setGenres([]);
+      setData({ results: [], total_pages: 0 });
+      setError(null);
+      setLoading(true);
+    }, [query]);
 
   useEffect(() => {
     if (!query) return;

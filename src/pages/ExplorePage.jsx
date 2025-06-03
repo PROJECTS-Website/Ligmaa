@@ -19,8 +19,6 @@ const ExplorePage = () => {
   } = useExplore(query); 
 
   useEffect(() => {
-    setActiveGenre(null);
-    setPage(1);
     window.scrollTo(0, 0);
   }, [query]);
 
@@ -89,7 +87,7 @@ const ExplorePage = () => {
 
       {/* Main Content */}
       <div className="mt-4">
-        <div className="flex sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div className="flex sm:flex-row justify-between items-center sm:items-center mb-6 gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-200">
               {uniqueGenres?.find((g) => g.id === activeGenre)?.name || 'Popular'}
@@ -103,7 +101,7 @@ const ExplorePage = () => {
           
           {data?.total_pages > 0 && (
             <div className="flex items-center space-x-2 bg-zinc-900/50 rounded-lg p-2">
-              <span className="text-sm text-gray-300">
+              <span className="text-sm text-gray-300 min-w-[100px]">
                 Page {page} of {Math.min(500, data.total_pages)}
               </span>
               <div className="h-5 w-px bg-zinc-700 mx-1"></div>

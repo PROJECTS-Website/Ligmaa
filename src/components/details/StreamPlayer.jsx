@@ -14,6 +14,7 @@ const StreamPlayer = ({
   onClose,
   onError,
 }) => {
+  mediaType = 'anime' ? 'tv' : mediaType;
   return (
     <section className="container mx-auto md:px-8 lg:px-12 py-8 md:py-12">
      <div className="flex justify-between items-center p-4 bg-black/50">

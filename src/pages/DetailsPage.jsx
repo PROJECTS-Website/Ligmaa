@@ -11,7 +11,7 @@ import StreamPlayer from "../components/details/StreamPlayer";
 import CastSection from "../components/details/CastSection";
 import VideosSection from "../components/details/VideosSection";
 import RecommendationsSection from "../components/details/RecommendationsSection";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { STREAMING_PROVIDERS } from "../services/streamingApi";
 
 const DetailsPage = () => {
@@ -274,6 +274,12 @@ const DetailsPage = () => {
             }}
           />
           {/* Provider Selection */}
+          {/* <div className="text-center text-sm text-yellow-500 bg-yellow-500/30 border border-yellow-500 rounded-lg p-2 w-fit mx-auto px-4 mb-2 flex items-center justify-between">
+            use adblocker for better watching experience 
+            <span>
+              <XMarkIcon className="w-4 h-4"/>
+            </span>
+          </div> */}
           <div className="flex flex-wrap gap-2 p-4 bg-zinc-900/80 rounded-t-lg">
             {STREAMING_PROVIDERS.map((provider) => (
               <button
