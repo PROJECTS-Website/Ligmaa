@@ -1,9 +1,8 @@
 // src/components/HeroBanner/HeroBanner.jsx
 import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination, EffectFade, Navigation } from "swiper/modules";
+import { Autoplay, EffectFade, Navigation } from "swiper/modules";
 import "swiper/css";
-import "swiper/css/pagination";
 import "swiper/css/effect-fade";
 import "swiper/css/navigation";
 
@@ -12,8 +11,6 @@ import { fetchTrending } from "../services/tmdbApi";
 import { PlayIcon, PlusIcon, StarIcon } from "../components/icons"; // Create these simple SVG icons
 import { Link } from "react-router-dom"; // For navigation
 import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
@@ -57,7 +54,7 @@ function HeroBanner() {
   return (
     <div className="relative h-[50vh] md:h-[70vh] w-full">
       <Swiper
-        modules={[Autoplay, Pagination, EffectFade, Navigation]}
+        modules={[Autoplay, EffectFade, Navigation]}
         spaceBetween={0}
         slidesPerView={1}
         loop={true}

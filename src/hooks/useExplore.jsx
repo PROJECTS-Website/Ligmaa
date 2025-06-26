@@ -136,7 +136,6 @@ export const useExplore = (query = 'movie') => {
 
       try {
         let res;
-        console.log("Fetching data for activeGenre:", activeGenre, "page:", page, "query:", query);
         
         if (query === 'movie') {
           res = await fetchGenreMovies(activeGenre, page, signal);

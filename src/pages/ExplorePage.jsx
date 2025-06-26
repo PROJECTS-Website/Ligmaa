@@ -22,7 +22,6 @@ const ExplorePage = () => {
     window.scrollTo(0, 0);
   }, [query]);
 
-  console.log("data in Explore Page", data.results)
 
   // Show loading state
   if (loading && !data?.results?.length) {

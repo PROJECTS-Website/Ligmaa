@@ -46,7 +46,7 @@ const ContentRow = ({ title, fetchFunction, apiParams = [], mediaType }) => {
   if (!items.length) return null;
 
   return (
-    <div className="mb-8 md:mb-12 mx-2 relative">
+    <div className="mb-8 md:mb-12 relative">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl md:text-2xl font-semibold">
           {title}

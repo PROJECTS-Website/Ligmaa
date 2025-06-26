@@ -1,17 +1,17 @@
 // src/pages/HomePage/HomePage.jsx
-import React, { useState } from 'react';
-import HeroBanner from '../components/HeroBanner';
-import ContentRow from '../components/ContentRow';
-import CategoryFilter from '../components/CategoryFilter';
-import Header from '../components/Header';
+import React, { useState } from "react";
+import HeroBanner from "../components/HeroBanner";
+import ContentRow from "../components/ContentRow";
+import CategoryFilter from "../components/CategoryFilter";
+import Header from "../components/Header";
 import {
   fetchTrending,
   fetchPopular,
   fetchTopRated,
-} from '../services/tmdbApi';
+} from "../services/tmdbApi";
 
-const HomePage = ({onMenuClick}) => {
-  const [activeCategory, setActiveCategory] = useState('all');
+const HomePage = ({ onMenuClick }) => {
+  const [activeCategory, setActiveCategory] = useState("all");
 
   const handleCategoryChange = (category) => {
     setActiveCategory(category);
@@ -19,42 +19,42 @@ const HomePage = ({onMenuClick}) => {
 
   return (
     <div className="pb-16 md:pb-4">
-      <Header onMenuClick={onMenuClick}/>
+      <Header onMenuClick={onMenuClick} />
       <HeroBanner />
+      <CategoryFilter
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategoryChange}
+      />
       <div className="px-2 md:px-4 lg:px-6">
-        <CategoryFilter
-          activeCategory={activeCategory}
-          onCategoryChange={handleCategoryChange}
-        />
-        {(activeCategory === 'all' || activeCategory === 'movie') && (
+        {(activeCategory === "all" || activeCategory === "movie") && (
           <ContentRow
             title="Trending Movies"
             fetchFunction={fetchTrending}
-            apiParams={['movie', 'day']}
+            apiParams={["movie", "day"]}
             mediaType="movie"
           />
         )}
-        {(activeCategory === 'all' || activeCategory === 'tv') && (
+        {(activeCategory === "all" || activeCategory === "tv") && (
           <ContentRow
             title="Trending Shows"
             fetchFunction={fetchTrending}
-            apiParams={['tv', 'day']}
+            apiParams={["tv", "day"]}
             mediaType="tv"
           />
         )}
-        {(activeCategory === 'all' || activeCategory === 'movie') && (
+        {(activeCategory === "all" || activeCategory === "movie") && (
           <ContentRow
             title="Popular Movies"
             fetchFunction={fetchPopular}
-            apiParams={['movie']}
+            apiParams={["movie"]}
             mediaType="movie"
           />
         )}
-        {(activeCategory === 'all' || activeCategory === 'tv') && (
+        {(activeCategory === "all" || activeCategory === "tv") && (
           <ContentRow
             title="Top Rated TV Shows"
             fetchFunction={fetchTopRated}
-            apiParams={['tv']}
+            apiParams={["tv"]}
             mediaType="tv"
           />
         )}

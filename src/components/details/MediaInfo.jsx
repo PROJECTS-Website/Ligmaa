@@ -27,12 +27,12 @@ const MediaInfo = ({
         <img
           src={posterPath}
           alt={`${title} poster`}
-          className="rounded-xl shadow-2xl w-2/3 md:w-full mx-auto md:mx-0 object-cover aspect-[2/3]"
+          className="rounded-xl shadow-2xl w-[60%] md:w-full mx-auto md:mx-0 object-cover aspect-[2/3]"
           onError={onImageError}
         />
       </div>
 
-      <div className="md:w-2/3 lg:w-3/4 pt-0 md:pt-2">
+      <div className="md:w-2/3 lg:w-3/4 pt-0 md:pt-2 mt-4 lg:mt-0 md:mt-0">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-1 md:mb-2">
           {title}
         </h1>
