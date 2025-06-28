@@ -21,7 +21,7 @@ const Layout = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto scrollbar-hide bg-zinc-900 lg:rounded-md md:rounded-md">
-          <div className="max-w-7xl mx-auto w-full">
+          <div className="w-full">
             <Outlet onMenuClick={toggleSidebar} />
           </div>
         </main>
