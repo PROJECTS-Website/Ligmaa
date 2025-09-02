@@ -8,7 +8,7 @@ const TMDB_API_KEY = import.meta.env.VITE_APP_TMDB_API_KEY;
 const api = axios.create({
   baseURL: BASE_URL,
   params: {
-    api_key: TMDB_API_KEY,
+    api_key: 2f314cbf861f870f69c2cdb20b619ee3,
   },
 });
 
